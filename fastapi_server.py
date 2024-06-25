@@ -1,18 +1,43 @@
-# fastapi_server.py
-from fastapi import FastAPI, HTTPException
-import subprocess
+# user.py
+import paho.mqtt.client as mqtt_client
 
-app = FastAPI()
+broker = "broker.emqx.io"
+topic_prefix = "gnss/data/"
 
-@app.post("/start/{receiver_name}")
-async def start_receiver(receiver_name: str):
+def on_message(client, userdata, message):
+    data = str(message.payload.decode("utf-8"))
+    print("Received message:", data)
+
+client = mqtt_client.Client('user')  # Не указываем явно протокол
+client.on_message = on_message
+
+def subscribe_to_topic(receiver_name):
     try:
-        subprocess.Popen(["python3", "receiver_service.py", receiver_name])
-        return {"status": "started", "receiver": receiver_name}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        client.connect(broker)
+        client.loop_start()
+        client.subscribe(f"{topic_prefix}{receiver_name}")
+        print(f"Subscribed to topic: {topic_prefix}{receiver_name}")
+    except Exception as ex:
+        print(f"Error subscribing to topic: {ex}")
+        client.disconnect()
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    try:
+        while True:
+            receiver_name = input("Enter receiver name to subscribe (or 'exit' to quit): ")
+            if receiver_name.lower() == 'exit':
+                break
+            subscribe_to_topic(receiver_name)
 
+        client.loop_forever()  # Цикл ожидания сообщений, обработка происходит в on_message
+
+    except KeyboardInterrupt:
+        print("Interrupted by user")
+        client.disconnect()
+
+    except mqtt_client.MQTTException as mqtt_ex:
+        print(f"MQTT Exception occurred: {mqtt_ex}")
+        client.disconnect()
+except Exception as ex:
+        print(f"An unexpected error occurred: {ex}")
+        client.disconnect()

@@ -1,1 +1,11 @@
+# services/subscriber.service
+[Unit]
+Description=MQTT Subscriber Service
+
+[Service]
+ExecStart=/usr/bin/python3 /path/to/project/mqtt_subscriber.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
 

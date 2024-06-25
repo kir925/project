@@ -1,21 +1,19 @@
-# mqtt_subscriber.py
-import paho.mqtt.client as mqtt_client
-import time
 
-broker = "broker.emqx.io"
-topic_prefix = "gnss/data/"
+import paho.mqtt.client as mqtt_client
+from paho.mqtt.client import MQTTv31
 
 def on_message(client, userdata, message):
-    data = str(message.payload.decode("utf-8"))
-    print("Received message:", data)
+    print(f"Received message '{message.payload.decode()}' on topic '{message.to>
 
-client = mqtt_client.Client('subscriber')
+client = mqtt_client.Client(client_id='subscriber', clean_session=True, userdat>
 client.on_message = on_message
 
-client.connect(broker)
-client.loop_start()
+broker_address = "broker.emqx.io"
+print(f"Connecting to MQTT broker at {broker_address}")
+client.connect(broker_address)
 
-client.subscribe(f"{topic_prefix}#")
+print("Subscribing to topic 'lab/leds/state'")
+client.subscribe("lab/leds/state")
 
 client.loop_forever()
 

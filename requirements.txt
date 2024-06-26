@@ -1,4 +1,5 @@
 pip install daemonize
 pip install pyproj
+pip install gunicorn
 
 schedule
